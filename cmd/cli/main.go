@@ -1,23 +1,32 @@
 package main
 
 import (
+	"currency-converter-cli/internal/api"
+	"currency-converter-cli/internal/config"
+	"currency-converter-cli/internal/converter"
+	"currency-converter-cli/internal/utils"
 	"log"
-	"os"
-
-	"github.com/joho/godotenv"
 )
 
 func init() {
-	err := godotenv.Load()
-	if err != nil {
-		log.Printf("Warning: .env file not found")
-	}
+	config.LoadEnv()
 }
 
 func main() {
-	apiKey := os.Getenv("API_KEY")
-	if apiKey == "" {
-		log.Fatal("API_KEY not set in env")
+	apiKey := config.GetEnv("API_KEY")
+	baseUrl := config.GetEnv("BASE_URL")
+	url := baseUrl + "/" + apiKey
+	args, err := utils.ArgParse()
+	if err != nil {
+		log.Fatalf("args with no arguments!")
 	}
+	if args.List {
+		codes := api.GetSupportedCodes(url)
+		utils.PrintSupportedCodes(codes)
+		return
+	}
+	c := api.GetPairConversion(url, args.From, args.To)
 
+	res := converter.Convert(args.Amount, c.ConversionRate)
+	utils.PrintConversionResult(args.Amount, res, args.From, args.To)
 }
