@@ -1,6 +1,5 @@
-# currency-converter-cli
-Currency Converter CLI on GO
+# Currency Converter CLI on GO
 
 
-Tests coverage
+**Tests coverage**
 ![tests](image.png)
