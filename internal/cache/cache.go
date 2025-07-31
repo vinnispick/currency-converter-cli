@@ -45,6 +45,9 @@ func getCache(cachePath string) (*map[string]models.CacheData, error) {
 	if err != nil {
 		return nil, err
 	}
+	if value == nil {
+		return nil, nil
+	}
 	var cache map[string]models.CacheData
 	err = json.Unmarshal(value, &cache)
 	if err != nil {
