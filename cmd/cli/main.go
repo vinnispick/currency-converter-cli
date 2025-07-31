@@ -18,16 +18,16 @@ func main() {
 }
 
 func run() error {
-	apiKey := config.GetEnv("API_KEY")
-	baseUrl := config.GetEnv("BASE_URL")
+	currencyApi := &api.LiveCurrencyAPI{
+		BaseURL: config.GetEnv("BASE_URL") + "/" + config.GetEnv("API_KEY"),
+	}
 	cacheFile := config.GetEnv("CACHE_FILE")
-	url := baseUrl + "/" + apiKey
 	args, err := utils.ArgParse()
 	if err != nil {
 		return err
 	}
 	if args.List {
-		codes, err := api.GetSupportedCodes(url)
+		codes, err := currencyApi.GetSupportedCodes()
 		if err != nil {
 			return err
 		}
@@ -43,7 +43,7 @@ func run() error {
 		handleConversion(args.Amount, *cacheCurrency, args.From, args.To)
 		return nil
 	} else {
-		con, err := api.GetPairConversion(url, args.From, args.To)
+		con, err := currencyApi.GetPairConversion(args.From, args.To)
 		if err != nil {
 			return err
 		}
