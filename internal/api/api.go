@@ -3,52 +3,53 @@ package api
 import (
 	"currency-converter-cli/pkg/models"
 	"encoding/json"
-	"log"
+	"fmt"
 	"net/http"
+	"time"
 )
 
-func GetSupportedCodes(url string) [][]string {
-	req, err := http.NewRequest("GET", url+"/codes", nil)
-	if err != nil {
-		log.Fatalf("failed to generate new request %v", err)
-	}
-	req.Header.Set("User-Agent", "TestAgent2")
-	client := &http.Client{}
-	res, err := client.Do(req)
-	if err != nil {
-		log.Fatalf("http for supported codes failed with : %v", err)
-	}
-	defer res.Body.Close()
+func GetSupportedCodes(url string) ([][]string, error) {
 	var code models.Code
-
-	err = json.NewDecoder(res.Body).Decode(&code)
-	if err != nil {
-		log.Fatalf("failed to decode JSON response: %v", err)
+	if err := fetchAndDecode(url+"/codes", &code); err != nil {
+		return nil, err
 	}
-
-	return code.SupportedCodes
+	return code.SupportedCodes, nil
 }
 
-func GetPairConversion(url, from, to string) models.Conversion {
-	reqUrl := url + "/pair/" + from + "/" + to
-	req, err := http.NewRequest("GET", reqUrl, nil)
-	if err != nil {
-		log.Fatalf("failed to generate new request %v", err)
-	}
-	req.Header.Set("User-Agent", "TestAgent2")
-	client := &http.Client{}
-	res, err := client.Do(req)
-	if err != nil {
-		log.Fatalf("http for currency pair failed with : %v", err)
-	}
-	defer res.Body.Close()
+func GetPairConversion(url, from, to string) (*models.Conversion, error) {
 	var c models.Conversion
 
-	err = json.NewDecoder(res.Body).Decode(&c)
+	if err := fetchAndDecode(fmt.Sprintf("%s/pair/%s/%s", url, from, to), &c); err != nil {
+		return nil, err
+	}
+	return &c, nil
+}
+
+func doGetRequest(url string) (*http.Response, error) {
+	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		log.Fatalf("failed to decode JSON response: %v", err)
+		return nil, err
+	}
+	client := &http.Client{
+		Timeout: 5 * time.Second,
+	}
+	res, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
+}
+
+func fetchAndDecode[T any](url string, target *T) error {
+	res, err := doGetRequest(url)
+	if err != nil {
+		return err
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode != http.StatusOK {
+		return fmt.Errorf("unexpected status code: %d", res.StatusCode)
 	}
 
-	return c
-
+	return json.NewDecoder(res.Body).Decode(target)
 }
