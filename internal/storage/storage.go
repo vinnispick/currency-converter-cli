@@ -25,6 +25,9 @@ func MarshalFile(file *os.File) ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to read file %s: %w", file.Name(), err)
 	}
+	if len(data) == 0 {
+		return nil, nil
+	}
 	return data, nil
 }
 
