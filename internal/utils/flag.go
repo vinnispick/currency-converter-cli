@@ -13,6 +13,7 @@ func ArgParse() (*models.Args, error) {
 	flag.StringVar(&args.From, "from", "", "From currency")
 	flag.StringVar(&args.To, "to", "", "To currency")
 	flag.BoolVar(&args.List, "list", false, "List all available currencies")
+	flag.BoolVar(&args.Refresh, "refresh", false, "Refresh cache")
 
 	flag.Parse()
 

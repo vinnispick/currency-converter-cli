@@ -39,7 +39,7 @@ func run() error {
 	if err != nil {
 		return err
 	}
-	if cacheCurrency != nil {
+	if cacheCurrency != nil && !args.Refresh {
 		handleConversion(args.Amount, *cacheCurrency, args.From, args.To)
 		return nil
 	} else {
