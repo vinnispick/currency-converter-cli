@@ -5,6 +5,6 @@ import (
 )
 
 type CurrencyAPI interface {
-	GetPairConversion(url, from, to string) (*models.Conversion, error)
+	GetPairConversion(from, to string) (*models.Conversion, error)
 	GetSupportedCodes() ([][]string, error)
 }
