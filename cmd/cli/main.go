@@ -9,35 +9,51 @@ import (
 	"log"
 )
 
-func init() {
+func main() {
 	config.LoadEnv()
+
+	if err := run(); err != nil {
+		log.Fatal(err)
+	}
 }
 
-func main() {
+func run() error {
 	apiKey := config.GetEnv("API_KEY")
 	baseUrl := config.GetEnv("BASE_URL")
 	cacheFile := config.GetEnv("CACHE_FILE")
 	url := baseUrl + "/" + apiKey
 	args, err := utils.ArgParse()
 	if err != nil {
-		log.Fatalf("args with no arguments!")
+		return err
 	}
 	if args.List {
-		codes := api.GetSupportedCodes(url)
+		codes, err := api.GetSupportedCodes(url)
+		if err != nil {
+			return err
+		}
 		utils.PrintSupportedCodes(codes)
-		return
+		return nil
 	}
-	cv := cache.GetCacheKey(args)
-	cacheCurrency := cache.GetCacheValue(cacheFile, cv)
+	cacheKey := cache.GetCacheKey(args)
+	cacheCurrency, err := cache.GetCacheValue(cacheFile, cacheKey)
+	if err != nil {
+		return err
+	}
 	if cacheCurrency != nil {
-		res := converter.Convert(args.Amount, *cacheCurrency)
-		utils.PrintConversionResult(args.Amount, res, args.From, args.To)
-		return
+		handleConversion(args.Amount, *cacheCurrency, args.From, args.To)
+		return nil
 	} else {
-		c := api.GetPairConversion(url, args.From, args.To)
-		cache.SetCacheValue(cacheFile, cv, c.ConversionRate)
-		res := converter.Convert(args.Amount, c.ConversionRate)
-		utils.PrintConversionResult(args.Amount, res, args.From, args.To)
+		con, err := api.GetPairConversion(url, args.From, args.To)
+		if err != nil {
+			return err
+		}
+		cache.SetCacheValue(cacheFile, cacheKey, con.ConversionRate)
+		handleConversion(args.Amount, con.ConversionRate, args.From, args.To)
 	}
+	return nil
+}
 
+func handleConversion(amount float64, rate float64, from string, to string) {
+	result := converter.Convert(amount, rate)
+	utils.PrintConversionResult(amount, result, from, to)
 }
