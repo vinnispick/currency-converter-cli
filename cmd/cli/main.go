@@ -3,6 +3,7 @@ package main
 import (
 	"currency-converter-cli/internal/api"
 	"currency-converter-cli/internal/app/cli"
+	"currency-converter-cli/internal/cache"
 	"currency-converter-cli/internal/config"
 	"currency-converter-cli/internal/utils"
 	"log"
@@ -13,7 +14,7 @@ func main() {
 
 	apiKey := config.GetEnv("API_KEY")
 	baseURL := config.GetEnv("BASE_URL")
-	cacheFile := config.GetEnv("CACHE_FILE")
+	cachePath := config.GetEnv("CACHE_FILE")
 
 	args, err := utils.ArgParse()
 
@@ -22,6 +23,7 @@ func main() {
 	}
 
 	liveAPI := &api.LiveCurrencyAPI{BaseURL: baseURL + "/" + apiKey}
+	cacheFile := cache.NewFileCache(cachePath)
 
 	if err := cli.Run(liveAPI, args, cacheFile); err != nil {
 		log.Fatal(err)

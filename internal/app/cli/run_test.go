@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"currency-converter-cli/internal/cache"
 	"currency-converter-cli/internal/mocks"
 	"currency-converter-cli/pkg/models"
 	"os"
@@ -27,8 +28,36 @@ func TestRunWithMockAPI(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer os.Remove(tmpFile.Name())
-	err = Run(mockAPI, args, tmpFile.Name())
+	cache := cache.NewFileCache(tmpFile.Name())
+	err = Run(mockAPI, args, cache)
 	if err != nil {
 		t.Fatalf("run failed %v", err)
+	}
+}
+
+func TestRunWithMockCache(t *testing.T) {
+	mockAPI := &mocks.MockCurrencyAPI{
+		Codes:          [][]string{{"USD", "United States Dollar"}, {"EUR", "Euro"}},
+		ConversionRate: 1.0,
+	}
+
+	args := &models.Args{
+		Amount: 100,
+		From:   "USD",
+		To:     "EUR",
+	}
+
+	cache := mocks.NewMockCache()
+	err := Run(mockAPI, args, cache)
+	if err != nil {
+		t.Fatalf("run failed %v", err)
+	}
+
+	val, ok := cache.Data["USD_EUR"]
+	if !ok {
+		t.Fatalf("expected cache to contain USD_EUR")
+	}
+	if val != 1.0 {
+		t.Errorf("expected cache value 1.0, got %f", val)
 	}
 }
